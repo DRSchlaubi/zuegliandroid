@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Zügli Android</string>
+    <string name="home_title">Golden Gate</string>
+    <string name="home_subtitle">Smart card bridge</string>
+    <string name="home_description">This app won\'t do anything on its own.\nA web app can initiate a session with a contactless smart card via this app.</string>
+
+    <string name="error_uri_title">Invalid URI</string>
+    <string name="error_uri_description">The app was called without the required parameters</string>
+</resources>
