@@ -14,7 +14,7 @@ import kotlinx.serialization.json.JsonClassDiscriminator
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("type")
 @Serializable
-sealed interface Messages {
+sealed interface Message {
     @Serializable
     @SerialName("connected")
     data class Connected(
@@ -24,19 +24,19 @@ sealed interface Messages {
         val historicalBytes: Base64,
         @SerialName("application-data")
         val applicationData: Base64
-    )
+    ): Message
 
     @Serializable
     @SerialName("error")
-    data class Error(val message: String)
+    data class Error(val message: String): Message
 
     @Serializable
     @SerialName("message")
-    data class Message(val message: String)
+    data class MessagePayload(val message: String): Message
 
     @Serializable
     @SerialName("request-apdu")
-    data class RequestADPU(
+    data class RequestAPDU(
         @SerialName("class")
         val clazz: UByte,
         val instruction: UByte,
@@ -45,30 +45,30 @@ sealed interface Messages {
         val data: Base64,
         @SerialName("expected-response-length")
         val expectedResponseLength: Int
-    )
+    ) : Message
 
     @Serializable
     @SerialName("request-apdu-raw")
-    data class RequestADPURaw(val data: Base64)
+    data class RequestAPDURaw(val data: Base64) : Message
 
     @Serializable
     @SerialName("response-apdu")
-    data class ResponseADPU(
+    data class ResponseAPDU(
         val sw1: UByte,
         val sw2: UByte,
         val data: Base64
-    )
+    ): Message
 
     @Serializable
     @SerialName("done")
-    data class Done(@SerialName("return-url") val returnUrl: String)
+    data class Done(@SerialName("return-url") val returnUrl: String): Message
 
     @Serializable
     @SerialName("ndef")
     data class NDEF(
         val identifier: Base64,
         val ndef: List<NDEFMessage>
-    )
+    ): Message
 }
 
 // Adapted from: https://github.com/TheEnbyperor/golden-gate/blob/root/Golden%20Gate/Golden%20Gate/Messages.swift#L142-L176
@@ -109,12 +109,14 @@ data class NDEFMessage(
         }
     }
 
-    fun fromNdefRecord(record: NdefRecord) = NDEFMessage(
-        typeNameFormat = TypeNameFormat.fromMagicValue(record.tnf),
-        type = record.type,
-        id = record.id,
-        data = record.payload
-    )
+    companion object {
+        fun fromNdefRecord(record: NdefRecord) = NDEFMessage(
+            typeNameFormat = TypeNameFormat.fromMagicValue(record.tnf),
+            type = record.type,
+            id = record.id,
+            data = record.payload
+        )
 
-    fun fromNdefMessage(message: NdefMessage) = message.records.map(::fromNdefRecord)
+        fun fromNdefMessage(message: NdefMessage) = message.records.map(::fromNdefRecord)
+    }
 }

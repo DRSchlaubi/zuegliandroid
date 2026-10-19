@@ -4,6 +4,17 @@
     <string name="home_subtitle">Smart card bridge</string>
     <string name="home_description">This app won\'t do anything on its own.\nA web app can initiate a session with a contactless smart card via this app.</string>
 
+    <string name="connecting">Connecting …</string>
+
     <string name="error_uri_title">Invalid URI</string>
     <string name="error_uri_description">The app was called without the required parameters</string>
+
+    <string name="pass_ready_title">Your pass is ready!</string>
+    <string name="open_pass">Open pass</string>
+
+    <string name="reading_card">Reading smart card</string>
+    <string name="invalid_tag">Your smart card is not supported</string>
+    <string name="waiting_for_tag">Please tap and hold your smart card</string>
+
+    <string name="open_website">Open Zügli</string>
 </resources>
