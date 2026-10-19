@@ -44,4 +44,4 @@ jobs:
         with:
           tag_name: ${{ github.run_number }}
           files: |
-            app/build/outputs/apk/oss/release/app-release-unsigned-signed.apk
+            app/build/outputs/apk/release/app-release-unsigned-signed.apk
