@@ -3,7 +3,7 @@ package dev.schlaubi.zuegli.android.nfc
 import android.nfc.tech.IsoDep
 import dev.schlaubi.zuegli.android.api.Message
 
-private val selectableAids = listOf("D2760001354B414E4D303100".hexToByteArray())
+val selectableAids = listOf("D2760001354B414E4D303100".hexToByteArray())
 
 fun Message.RequestAPDU.toByteArray() =
     buildApdu(clazz, instruction, p1, p2, data, expectedResponseLength)

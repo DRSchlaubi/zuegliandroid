@@ -40,7 +40,7 @@ import dev.schlaubi.zuegli.android.api.APIClient
 import dev.schlaubi.zuegli.android.api.Message
 import dev.schlaubi.zuegli.android.api.NDEFMessage
 import dev.schlaubi.zuegli.android.nfc.APDUResponse
-import dev.schlaubi.zuegli.android.nfc.getAID
+import dev.schlaubi.zuegli.android.nfc.selectableAids
 import dev.schlaubi.zuegli.android.nfc.toByteArray
 import dev.schlaubi.zuegli.android.ui.theme.icons.OpenInBrowser
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
@@ -100,7 +100,8 @@ sealed interface State {
             val isoTag: IsoDep? = null,
             val error: String? = null,
             val infoMessage: String? = null,
-            val passUrl: String? = null
+            val passUrl: String? = null,
+            val currentTagResponse: String? = null
         )
 
         private val _uiState = MutableStateFlow(ReaderState())
@@ -175,39 +176,52 @@ sealed interface State {
                     parsingTag = true
                 )
             )
-            if (IsoDep::class.qualifiedName in tag.techList) return handleIsoTag(tag)
-            if (MifareUltralight::class.qualifiedName in tag.techList) return handleMifare(tag)
-            handleInvalidTag()
+            launch(Dispatchers.IO) {
+                if (IsoDep::class.qualifiedName in tag.techList && handleIsoTag(tag)) return@launch
+                if (MifareUltralight::class.qualifiedName in tag.techList && handleMifare(tag)) return@launch
+                handleInvalidTag()
+            }
         }
 
-        private fun handleIsoTag(tag: Tag) {
-            launch(Dispatchers.IO) {
-                val iso = IsoDep.get(tag) ?: return@launch handleInvalidTag()
-                iso.connect()
-                _uiState.tryEmit(_uiState.value.copy(isoTag = iso))
-                val nfc = NfcB.get(tag)
-                val aid = iso.getAID() ?: return@launch handleInvalidTag()
+        private suspend fun handleIsoTag(tag: Tag): Boolean {
+            Log.d("ZUEGLI", "Handling ISO tag")
+            val iso = IsoDep.get(tag) ?: return false
+            iso.connect()
+            _uiState.tryEmit(_uiState.value.copy(isoTag = iso))
+            val nfc = NfcB.get(tag)
+            val aid = selectableAids.firstOrNull { aid ->
+                val selectCommand =
+                    byteArrayOf(0x00, 0xA4.toByte(), 0x04, 0x00, aid.size.toByte(), *aid, 0x00)
+                val response = runCatching { iso.transceive(selectCommand) }.getOrNull()
+                _uiState.tryEmit(_uiState.value.copy(currentTagResponse = response?.toHexString()))
 
-                sendMessage(
-                    Message.Connected(
-                        aid,
-                        tag.id,
-                        iso.historicalBytes ?: byteArrayOf(),
-                        nfc?.applicationData ?: byteArrayOf()
-                    )
+                // Check if selection was successful (Trailing bytes 90 00)
+                response != null && response.size >= 2 &&
+                        response[response.size - 2] == 0x90.toByte() &&
+                        response[response.size - 1] == 0x00.toByte()
+            } ?: return false
+
+            sendMessage(
+                Message.Connected(
+                    aid,
+                    tag.id,
+                    iso.historicalBytes ?: byteArrayOf(),
+                    nfc?.applicationData ?: byteArrayOf()
                 )
-            }
+            )
+
+            return true
         }
 
-        private fun handleMifare(tag: Tag) {
-            launch(Dispatchers.IO) {
-                val ndef = Ndef.get(tag) ?: return@launch handleInvalidTag()
-                ndef.connect()
-                val ndefMessage = ndef.cachedNdefMessage ?: return@launch handleInvalidTag()
-                val apiNdefMessage = NDEFMessage.fromNdefMessage(ndefMessage)
+        private suspend fun handleMifare(tag: Tag): Boolean {
+            Log.d("ZUEGLI", "Handling NDEF tag")
+            val ndef = Ndef.get(tag) ?: return false
+            ndef.connect()
+            val ndefMessage = ndef.cachedNdefMessage ?: return false
+            val apiNdefMessage = NDEFMessage.fromNdefMessage(ndefMessage)
 
-                sendMessage(Message.NDEF(tag.id, apiNdefMessage))
-            }
+            sendMessage(Message.NDEF(tag.id, apiNdefMessage))
+            return true
         }
 
         private suspend fun sendMessage(message: Message) {
