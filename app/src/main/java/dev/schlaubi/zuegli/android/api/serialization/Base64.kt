@@ -20,5 +20,5 @@ object Base64Serializer : KSerializer<ByteArray> {
     )
 
     override fun serialize(encoder: Encoder, value: ByteArray) = encoder.encodeString(base64.encode(value))
-    override fun deserialize(decoder: Decoder): ByteArray = Base64.decode(decoder.decodeString())
+    override fun deserialize(decoder: Decoder): ByteArray = base64.decode(decoder.decodeString())
 }

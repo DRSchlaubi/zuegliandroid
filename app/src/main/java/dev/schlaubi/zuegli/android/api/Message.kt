@@ -5,6 +5,7 @@ package dev.schlaubi.zuegli.android.api
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import dev.schlaubi.zuegli.android.api.serialization.Base64
+import dev.schlaubi.zuegli.android.api.serialization.HexString
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -18,7 +19,7 @@ sealed interface Message {
     @Serializable
     @SerialName("connected")
     data class Connected(
-        val aid: String,
+        val aid: HexString,
         val identifier: Base64,
         @SerialName("historical-bytes")
         val historicalBytes: Base64,

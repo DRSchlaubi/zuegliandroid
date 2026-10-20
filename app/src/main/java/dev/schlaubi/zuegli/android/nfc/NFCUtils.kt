@@ -1,9 +1,12 @@
 package dev.schlaubi.zuegli.android.nfc
 
+import android.nfc.tech.IsoDep
 import dev.schlaubi.zuegli.android.api.Message
-import kotlin.collections.copyOfRange
 
-fun Message.RequestAPDU.toByteArray() = buildApdu(clazz, instruction, p1, p2, data, expectedResponseLength)
+private val selectableAids = listOf("D2760001354B414E4D303100".hexToByteArray())
+
+fun Message.RequestAPDU.toByteArray() =
+    buildApdu(clazz, instruction, p1, p2, data, expectedResponseLength)
 
 fun buildApdu(
     clazz: UByte, instruction: UByte, p1: UByte, p2: UByte,
@@ -56,4 +59,15 @@ data class APDUResponse(
             return APDUResponse(sw1, sw2, response)
         }
     }
+}
+
+fun IsoDep.getAID() = selectableAids.firstOrNull { aid ->
+    val selectCommand =
+        byteArrayOf(0x00, 0xA4.toByte(), 0x04, 0x00, aid.size.toByte(), *aid, 0x00)
+    val response = runCatching { transceive(selectCommand) }.getOrNull()
+
+    // Check if selection was successful (Trailing bytes 90 00)
+    response != null && response.size >= 2 &&
+            response[response.size - 2] == 0x90.toByte() &&
+            response[response.size - 1] == 0x00.toByte()
 }

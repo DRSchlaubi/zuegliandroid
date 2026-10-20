@@ -40,6 +40,7 @@ import dev.schlaubi.zuegli.android.api.APIClient
 import dev.schlaubi.zuegli.android.api.Message
 import dev.schlaubi.zuegli.android.api.NDEFMessage
 import dev.schlaubi.zuegli.android.nfc.APDUResponse
+import dev.schlaubi.zuegli.android.nfc.getAID
 import dev.schlaubi.zuegli.android.nfc.toByteArray
 import dev.schlaubi.zuegli.android.ui.theme.icons.OpenInBrowser
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
@@ -185,10 +186,11 @@ sealed interface State {
                 iso.connect()
                 _uiState.tryEmit(_uiState.value.copy(isoTag = iso))
                 val nfc = NfcB.get(tag)
+                val aid = iso.getAID() ?: return@launch handleInvalidTag()
 
                 sendMessage(
                     Message.Connected(
-                        "",
+                        aid,
                         tag.id,
                         iso.historicalBytes ?: byteArrayOf(),
                         nfc?.applicationData ?: byteArrayOf()
