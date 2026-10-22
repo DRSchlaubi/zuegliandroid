@@ -105,7 +105,7 @@ jobs:
           branch: fdroid-repo
           directory: fdroid-workspace
       - name: Trigger deploy CI
-        run: gh workflow run publish.yml --ref fdroid-repo
+        run: gh workflow run publish.yaml --ref fdroid-repo
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
