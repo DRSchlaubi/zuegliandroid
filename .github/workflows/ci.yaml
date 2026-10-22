@@ -5,15 +5,14 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write
-
 env:
   BUILD_TOOLS_VERSION: 36.0.0
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -45,12 +44,30 @@ jobs:
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: apk
+          path: app/build/outputs/apk/release/app-release-unsigned-signed.apk
+  release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: fdroid
+      - uses: actions/download-artifact@v8
+        name: Download artifact
+        with:
+          name: apk
+          path: app.apk
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.run_number }}
-          files: |
-            app/build/outputs/apk/release/app-release-unsigned-signed.apk
+          files: app.apk
       - name: Setup F-Droid signing
         working-directory: fdroid
         env:
@@ -63,7 +80,7 @@ jobs:
       - name: Copy F-Droid config to workspace
         run: cp fdroid/* fdroid-workspace -r
       - name: Copy Release APK into repo
-        run: cp app/build/outputs/apk/release/app-release-unsigned-signed.apk fdroid-workspace/repo
+        run: cp app.apk fdroid-workspace/repo
       - name: Update F-Droid repo
         working-directory: fdroid-workspace
         env:
@@ -84,4 +101,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: fdroid-repo
           directory: fdroid-workspace
+      - name: Trigger deploy CI
+        run: gh workflow run publish.yml --ref fdroid-repo
+        env:
+          GH_TOKEN: ${{ secrets.token }}
 
