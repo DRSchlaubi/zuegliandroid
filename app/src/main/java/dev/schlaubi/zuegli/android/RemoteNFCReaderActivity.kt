@@ -11,6 +11,7 @@ import android.nfc.tech.NfcB
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,7 +28,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
@@ -40,7 +43,7 @@ import dev.schlaubi.zuegli.android.api.APIClient
 import dev.schlaubi.zuegli.android.api.Message
 import dev.schlaubi.zuegli.android.api.NDEFMessage
 import dev.schlaubi.zuegli.android.nfc.APDUResponse
-import dev.schlaubi.zuegli.android.nfc.selectableAids
+import dev.schlaubi.zuegli.android.nfc.getAID
 import dev.schlaubi.zuegli.android.nfc.toByteArray
 import dev.schlaubi.zuegli.android.ui.theme.icons.OpenInBrowser
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
@@ -189,17 +192,7 @@ sealed interface State {
             iso.connect()
             _uiState.tryEmit(_uiState.value.copy(isoTag = iso))
             val nfc = NfcB.get(tag)
-            val aid = selectableAids.firstOrNull { aid ->
-                val selectCommand =
-                    byteArrayOf(0x00, 0xA4.toByte(), 0x04, 0x00, aid.size.toByte(), *aid, 0x00)
-                val response = runCatching { iso.transceive(selectCommand) }.getOrNull()
-                _uiState.tryEmit(_uiState.value.copy(currentTagResponse = response?.toHexString()))
-
-                // Check if selection was successful (Trailing bytes 90 00)
-                response != null && response.size >= 2 &&
-                        response[response.size - 2] == 0x90.toByte() &&
-                        response[response.size - 1] == 0x00.toByte()
-            } ?: return false
+            val aid = iso.getAID() ?: return false
 
             sendMessage(
                 Message.Connected(
@@ -279,24 +272,38 @@ class RemoteNFCReaderActivity : ZuegliContentActivity() {
 
     @Composable
     override fun Content() {
+        var debugVisible by remember { mutableStateOf(false) }
         val viewModel = viewModel { RemoteNFCViewModel() }
         val state by viewModel.state.collectAsState()
 
         LaunchedEffect(intent) {
             viewModel.consumeIntent(intent)
         }
+        Box {
+            Scaffold(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                val modifier = Modifier.padding(it)
+                when (val state = state) {
+                    is State.Error -> Error(state.title, state.description, modifier = modifier)
+                    is State.Connecting -> Connecting(modifier)
+                    is State.Connected -> NFCSession(
+                        this@RemoteNFCReaderActivity,
+                        state,
+                        debug = debugVisible,
+                        modifier = modifier
+                    )
 
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            val modifier = Modifier.padding(it)
-            when (val state = state) {
-                is State.Error -> Error(state.title, state.description, modifier = modifier)
-                is State.Connecting -> Connecting(modifier)
-                is State.Connected -> NFCSession(this, state, modifier = modifier)
-                else -> {}
+                    else -> {}
+                }
             }
+
+            SecretDebugTrigger(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd),
+                onTriggered = { debugVisible = true }
+            )
         }
     }
 }
@@ -322,7 +329,8 @@ private fun Error(title: String, description: String, modifier: Modifier = Modif
 private fun NFCSession(
     activity: Activity,
     state: State.Connected,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    debug: Boolean = false
 ) = Column(modifier) {
     val adapter = remember(activity) { NfcAdapter.getDefaultAdapter(activity) }
     val readerState by state.uiState.collectAsState()
@@ -335,12 +343,14 @@ private fun NFCSession(
         onDispose { state.cancel(CancellationException("Composable left composition")) }
     }
 
-    NFCSessionUI(readerState)
+    NFCSessionUI(readerState, debug)
 }
 
 @Composable
-private fun NFCSessionUI(readerState: State.Connected.ReaderState) {
-    Text(readerState.toString())
+private fun NFCSessionUI(readerState: State.Connected.ReaderState, debug: Boolean = true) {
+    if (debug) {
+        Text(readerState.toString())
+    }
     Column(
         verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
