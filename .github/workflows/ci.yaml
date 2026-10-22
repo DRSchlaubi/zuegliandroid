@@ -19,12 +19,6 @@ jobs:
         with:
           java-version: 27
           distribution: temurin
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.x'
-          cache: 'pip'
-      - run: pip install -r requirements.txt
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
@@ -58,7 +52,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          sparse-checkout: fdroid
+          sparse-checkout: | 
+            fdroid
+            requirements.txt
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
       - uses: actions/download-artifact@v8
         name: Download artifact
         with:
