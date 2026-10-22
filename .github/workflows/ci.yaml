@@ -63,7 +63,7 @@ jobs:
         name: Download artifact
         with:
           name: apk
-          path: app.apk
+          path: apk
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
@@ -81,7 +81,7 @@ jobs:
       - name: Copy F-Droid config to workspace
         run: cp fdroid/* fdroid-workspace -r
       - name: Copy Release APK into repo
-        run: cp app.apk fdroid-workspace/repo
+        run: cp apk/app-release-unsigned-signed.apk fdroid-workspace/repo
       - name: Update F-Droid repo
         working-directory: fdroid-workspace
         env:
