@@ -1,0 +1,13 @@
+Categories:
+  - fdroid
+  - public transport
+  - train
+  - vdv
+CurrentVersionCode: 1
+IssueTracker: 'https://github.com/DRSchlaubi/zuegliandroid/issues'
+Name: Zügli Golden Gate Android
+SourceCode: 'https://github.com/DRSchlaubi/zuegliandroid'
+Summary: 'Zügli is a website allowing you to read public transport tickets, this app acts as a bridge to read NFC Smart cards'
+WebSite: 'https://github.com/DRSchlaubi/zuegliandroid'
+License: MIT
+AuthorName: "Michael Rittmeister"

@@ -45,3 +45,36 @@ jobs:
           tag_name: ${{ github.run_number }}
           files: |
             app/build/outputs/apk/release/app-release-unsigned-signed.apk
+      - name: Setup F-Droid signing
+        working-directory: fdroid
+        env:
+          FDROID_KEYSTORE: ${{ secrets.KEYSTORE }}
+        run: echo "$FDROID_KEYSTORE" | base64 --decode > keystore.p12
+      - uses: actions/checkout@v7
+        with:
+          ref: 'fdroid-repo'
+          path: 'fdroid-workspace'
+      - name: Copy F-Droid config to workspace
+        run: cp fdroid/* fdroid-workspace
+      - name: Copy Release APK into repo
+        run: cp app/build/outputs/apk/release/app-release-unsigned-signed.apk fdroid-workspace/repo
+      - name: Update F-Droid repo
+        working-directory: fdroid-workspace
+        env:
+          FDROID_KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          FDROID_KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+          FDROID_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: fdroid update --rename
+      - name: Commit changes
+        working-directory: fdroid-workspace
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -a -m "Update F-Droid repo"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: froid-repo
+          directory: fdroid-workspace
+
