@@ -2,3 +2,5 @@
 !.gitignore
 !/repo
 !/archive
+!/.github
+!index.html
