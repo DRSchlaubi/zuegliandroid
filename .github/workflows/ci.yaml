@@ -55,7 +55,7 @@ jobs:
           ref: 'fdroid-repo'
           path: 'fdroid-workspace'
       - name: Copy F-Droid config to workspace
-        run: cp fdroid/* fdroid-workspace
+        run: cp fdroid/* fdroid-workspace -r
       - name: Copy Release APK into repo
         run: cp app/build/outputs/apk/release/app-release-unsigned-signed.apk fdroid-workspace/repo
       - name: Update F-Droid repo
