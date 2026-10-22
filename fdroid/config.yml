@@ -1,6 +1,6 @@
 repo_url: "https://fdroid.trainy.app/repo"
-repo_name: "Trainy"
-repo_description: "Official Trainy F-Droid repository"
+repo_name: "Golden Gate Android"
+repo_description: "Godlen Gate Android repository"
 repo_icon: icon.png
 archive_older: 5
 keystore: keystore.p12
