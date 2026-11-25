@@ -289,7 +289,7 @@ class RemoteNFCViewModel : ViewModel() {
 class RemoteNFCReaderActivity : ZuegliContentActivity() {
 
     @Composable
-    override fun Content() = ZuegliTheme {
+    override fun Content() {
         var debugVisible by remember { mutableStateOf(false) }
         val viewModel = viewModel { RemoteNFCViewModel() }
         val state by viewModel.state.collectAsState()

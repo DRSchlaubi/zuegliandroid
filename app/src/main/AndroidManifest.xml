@@ -46,5 +46,17 @@
                 <data android:host="vdv-pkpass-nfc.magicalcodewit.ch" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".UploadFileActivity"
+            android:label="@string/upload_to_zuegli"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/jpeg" />
+                <data android:mimeType="image/png" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

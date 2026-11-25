@@ -18,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.schlaubi.zuegli.android.ui.theme.ZuegliTheme
 import dev.schlaubi.zuegli.android.ui.theme.icons.OpenInBrowser
 
 class MainActivity : ZuegliContentActivity() {
@@ -27,7 +26,7 @@ class MainActivity : ZuegliContentActivity() {
 }
 
 @Composable
-private fun HomeView() = ZuegliTheme {
+private fun HomeView() {
     val urlHandler = LocalUriHandler.current
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,

@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import dev.schlaubi.zuegli.android.ui.theme.ZuegliTheme
 
 abstract class ZuegliContentActivity : ComponentActivity() {
 
@@ -12,7 +13,9 @@ abstract class ZuegliContentActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        setContent { Content() }
+        setContent {
+            ZuegliTheme { Content() }
+        }
     }
 
     @Composable

@@ -1,11 +1,13 @@
 <resources>
     <string name="app_name">Zügli Android</string>
+    <string name="upload_to_zuegli">Upload to Zügli.app</string>
     <string name="home_title">Golden Gate</string>
     <string name="home_subtitle">Smart card bridge</string>
     <string name="home_description">This app won\'t do anything on its own.\nA web app can initiate a session with a contactless smart card via this app.</string>
 
     <string name="connecting">Connecting …</string>
 
+    <string name="error_generic">Unknown Error</string>
     <string name="error_uri_title">Invalid URI</string>
     <string name="error_uri_description">The app was called without the required parameters</string>
 
@@ -21,6 +23,7 @@
     <string name="reading_card">Reading smart card</string>
     <string name="invalid_tag">Your smart card is not supported</string>
     <string name="waiting_for_tag">Please tap and hold your smart card</string>
+    <string name="uploading_image">Uploading image …</string>
 
     <string name="open_website">Open Zügli</string>
 
