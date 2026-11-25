@@ -13,10 +13,12 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,11 +32,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -63,6 +68,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
+private val whitelistedServers = ["zügli.app"]
+
 sealed interface State {
     sealed interface Error : State {
         @get:Composable
@@ -71,6 +78,8 @@ sealed interface State {
         @get:Composable
         val description: String
     }
+
+    data class UnknownServer(val server: Url) : State
 
     data object Dead : State
     data class DynamicError(private val _title: String, private val _description: String) : Error {
@@ -245,7 +254,7 @@ class RemoteNFCViewModel : ViewModel() {
 
     suspend fun consumeIntent(intent: Intent) {
         val url = intent.data?.toString()?.let(::Url)
-        val server = url?.parameters["server"]
+        val server = url?.parameters["server"]?.let(::Url)
 
         if (server == null) {
             _uiState.tryEmit(
@@ -257,6 +266,14 @@ class RemoteNFCViewModel : ViewModel() {
             return
         }
         (_uiState.value as? State.Connected)?.session?.close()
+        if (server.host !in whitelistedServers) {
+            _uiState.tryEmit(State.UnknownServer(server))
+        } else {
+            connectToServer(server)
+        }
+    }
+
+    suspend fun connectToServer(server: Url) {
         val session = try {
             APIClient.connect(server)
         } catch (e: Exception) {
@@ -295,6 +312,8 @@ class RemoteNFCReaderActivity : ZuegliContentActivity() {
                         modifier = modifier
                     )
 
+                    is State.UnknownServer -> UnknownServer(state, viewModel, modifier)
+
                     else -> {}
                 }
             }
@@ -326,6 +345,45 @@ private fun Error(title: String, description: String, modifier: Modifier = Modif
     }
 
 @Composable
+private fun UnknownServer(
+    state: State.UnknownServer,
+    model: RemoteNFCViewModel,
+    modifier: Modifier = Modifier
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    Column(
+        modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            stringResource(R.string.unknown_server_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(
+            stringResource(R.string.unknown_server_description, state.server.toString()),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            Button(
+                { coroutineScope.launch { model.connectToServer(state.server) } },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+            ) {
+                Text(stringResource(R.string.yes))
+            }
+            Button({
+                context.startActivity(Intent(context, MainActivity::class.java))
+            }) {
+                Text(stringResource(R.string.no))
+            }
+        }
+    }
+}
+
+@Composable
 private fun NFCSession(
     activity: Activity,
     state: State.Connected,
@@ -334,6 +392,13 @@ private fun NFCSession(
 ) = Column(modifier) {
     val adapter = remember(activity) { NfcAdapter.getDefaultAdapter(activity) }
     val readerState by state.uiState.collectAsState()
+
+    if (adapter == null) {
+        return@Column Error(
+            stringResource(R.string.error_no_nfc_title),
+            stringResource(R.string.error_no_nfc_description)
+        )
+    }
 
     DisposableEffect(state) {
         adapter.enableReaderMode(
@@ -410,4 +475,11 @@ fun Scanning() {
             infoMessage = "Reading smart card"
         )
     )
+}
+
+@Composable
+@Preview
+fun UnknownServerPreview() {
+    val viewModel = viewModel { RemoteNFCViewModel() }
+    UnknownServer(State.UnknownServer(Url("")), viewModel)
 }

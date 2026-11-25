@@ -9,6 +9,12 @@
     <string name="error_uri_title">Invalid URI</string>
     <string name="error_uri_description">The app was called without the required parameters</string>
 
+    <string name="error_no_nfc_title">NFC Unsupported</string>
+    <string name="error_no_nfc_description">Your device does not support NFC</string>
+
+    <string name="unknown_server_title">Unknown Server</string>
+    <string name="unknown_server_description">You\'re trying to connect to the server "%1$s". This server is unknown, do you want to continue?</string>
+
     <string name="pass_ready_title">Your pass is ready!</string>
     <string name="open_pass">Open pass</string>
 
@@ -17,4 +23,7 @@
     <string name="waiting_for_tag">Please tap and hold your smart card</string>
 
     <string name="open_website">Open Zügli</string>
+
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>

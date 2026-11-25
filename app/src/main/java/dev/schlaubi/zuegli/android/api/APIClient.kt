@@ -23,8 +23,7 @@ object APIClient {
         }
     }
 
-    suspend fun connect(url: String): DefaultClientWebSocketSession {
-        val url = Url(url)
+    suspend fun connect(url: Url): DefaultClientWebSocketSession {
         return http.webSocketSession {
             this.url.takeFrom(url)
 

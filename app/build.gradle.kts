@@ -4,6 +4,12 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xcollection-literals")
+    }
+}
+
 android {
     namespace = "dev.schlaubi.zuegli.android"
     compileSdk {
