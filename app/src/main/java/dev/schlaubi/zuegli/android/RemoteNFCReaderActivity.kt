@@ -50,6 +50,7 @@ import dev.schlaubi.zuegli.android.api.NDEFMessage
 import dev.schlaubi.zuegli.android.nfc.APDUResponse
 import dev.schlaubi.zuegli.android.nfc.getAID
 import dev.schlaubi.zuegli.android.nfc.toByteArray
+import dev.schlaubi.zuegli.android.ui.theme.ZuegliTheme
 import dev.schlaubi.zuegli.android.ui.theme.icons.OpenInBrowser
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.receiveDeserialized
@@ -288,7 +289,7 @@ class RemoteNFCViewModel : ViewModel() {
 class RemoteNFCReaderActivity : ZuegliContentActivity() {
 
     @Composable
-    override fun Content() {
+    override fun Content() = ZuegliTheme {
         var debugVisible by remember { mutableStateOf(false) }
         val viewModel = viewModel { RemoteNFCViewModel() }
         val state by viewModel.state.collectAsState()
