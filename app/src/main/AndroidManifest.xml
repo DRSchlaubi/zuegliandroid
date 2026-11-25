@@ -34,8 +34,7 @@
         <activity
             android:name=".RemoteNFCReaderActivity"
             android:exported="true">
-            <!-- cannot auto-verify as I do not own the domains -->
-            <intent-filter tools:ignore="AppLinkWarning">
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
